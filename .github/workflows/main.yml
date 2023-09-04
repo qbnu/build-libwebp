@@ -1,0 +1,36 @@
+name: Buildm
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2019
+    # Run a job for each of the specified target architectures:
+    strategy:
+      matrix:
+        arch:
+          - win64
+          - win32
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+      - name: Build
+        run: |
+          git submodule update --init --recursive --depth 1 --recommend-shallow
+          cd libwebp
+          nmake /f Makefile.vc CFG=release-static RTLIBCFG=static OBJDIR=output
+      - name: Upload output
+        uses: actions/upload-artifact@v3
+        with:
+          name: releaselibwebp
+          path: libwebp/output/release-static
+      # ...
